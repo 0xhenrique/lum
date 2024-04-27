@@ -175,7 +175,7 @@ fn view_bookmarks() {
 
             println!("Bookmarks for {}: ", bookmark_data.owner);
             for (index, bookmark) in bookmark_data.bookmarks.iter().enumerate() {
-                println!("{}. {}\n - {}\n", index + 1, bookmark.title, bookmark.link);
+                println!("{}. {}\n - {}\n", index, bookmark.title, bookmark.link);
             }
         }
         Err(error) => {
@@ -183,11 +183,73 @@ fn view_bookmarks() {
             return;
         }
     }
-    handle_options_from_user_input();
 }
 
 fn delete_bookmark() {
-    println!("Deleting bookmark now...");
+    view_bookmarks();
+
+    println!("Enter the index of the bookmark you want to delete:");
+    let mut index_input = String::new();
+    io::stdin().read_line(&mut index_input).expect("Failed to read input.");
+    let index_input: usize = match index_input.trim().parse() {
+        Ok(index) => index,
+        Err(error) => {
+            println!("Invalid input. Please enter a valid index due to: {}", error);
+            return;
+        }
+    };
+
+    let mut file = match File::open("assets/lum-marker.json") {
+        Ok(file) => file,
+        Err(error) => {
+            println!("Failed to open bookmark file: {}", error);
+            return;
+        }
+    };
+
+    let mut contents = String::new();
+    if let Err(error) = file.read_to_string(&mut contents) {
+        println!("Failed to read bookmark file: {}", error);
+        return;
+    }
+
+    let mut bookmark_data: BookmarkData = match serde_json::from_str(&contents) {
+        Ok(data) => data,
+        Err(error) => {
+            println!("Failed to parse bookmark data: {}", error);
+            return;
+        }
+    };
+
+    if index_input >= bookmark_data.bookmarks.len() {
+        println!("Index out of bounds. This bookmark probably DO NOT exist.");
+        return;
+    }
+
+    bookmark_data.bookmarks.remove(index_input);
+
+    let new_contents = match serde_json::to_string(&bookmark_data) {
+        Ok(data) => data,
+        Err(error) => {
+            println!("Failed to serialize bookmark data: {}", error);
+            return;
+        }
+    };
+
+    let mut file = match OpenOptions::new().write(true).truncate(true).open("assets/lum-marker.json") {
+        Ok(file) => file,
+        Err(error) => {
+            println!("Failed to open bookmark file for writing: {}", error);
+            return;
+        }
+    };
+
+    if let Err(error) = file.write_all(new_contents.as_bytes()) {
+        println!("Failed to write updated bookmark data to file: {}", error);
+        return;
+    }
+
+    println!("Bookmark deleted successfully.");
 }
 
 fn purge_bookmarks() {
