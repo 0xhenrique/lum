@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use std::io;
 use std::io::prelude::*;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::num::ParseIntError;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::env;
@@ -80,7 +80,7 @@ fn handle_options_from_user_input() {
 
 /*
  * @TODO: The whole "input" logic will soon be moved to a specific directory/file so I can have a better
- * controll on this section -> src/
+ * controll on this section
  */
 fn print_options() {
     println!("What is the operation?");
@@ -93,7 +93,64 @@ fn print_options() {
 }
 
 fn add_new_bookmark() {
-    println!("Adding a new bookmark now...");
+    let mut file = match File::open("assets/lum-marker.json") {
+	Ok(file) => file,
+	Err(error) => {
+	    println!("Error due to: {}", error);
+		return;
+	}
+    };
+
+    let mut contents = String::new();
+    if let Err(error) = file.read_to_string(&mut contents) {
+	println!("Failed due to: {}", error);
+	return;
+    };
+
+    let mut bookmark_data: BookmarkData = match serde_json::from_str(&contents) {
+        Ok(data) => data,
+        Err(error) => {
+            println!("Failed to parse bookmark data due to: {}", error);
+            return;
+        }
+    };
+    
+    println!("Enter the title for the new bookmark:");
+    let mut title = String::new();
+    io::stdin().read_line(&mut title).expect("Failed to read input.");
+    let title = title.trim().to_string();
+    
+    println!("Enter the link for the new bookmark:");
+    let mut link = String::new();
+    io::stdin().read_line(&mut link).expect("Failed to read input.");
+    let link = link.trim().to_string();
+    
+    let new_bookmark = Bookmark { title, link };
+    
+    bookmark_data.bookmarks.push(new_bookmark);
+    
+    let new_contents = match serde_json::to_string(&bookmark_data) {
+        Ok(data) => data,
+        Err(error) => {
+            println!("Failed to serialize bookmark data due to: {}", error);
+            return;
+        }
+    };
+    
+    let mut file = match OpenOptions::new().write(true).truncate(true).open("assets/lum-marker.json") {
+        Ok(file) => file,
+        Err(error) => {
+            println!("Failed to open bookmark file for writing due to: {}", error);
+            return;
+        }
+    };
+    
+    if let Err(error) = file.write_all(new_contents.as_bytes()) {
+        println!("Failed to write updated bookmark data to file due to: {}", error);
+        return;
+    }
+    
+    println!("New bookmark added successfully.");
 }
 
 fn view_bookmarks() {
@@ -126,6 +183,7 @@ fn view_bookmarks() {
             return;
         }
     }
+    handle_options_from_user_input();
 }
 
 fn delete_bookmark() {
