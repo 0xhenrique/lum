@@ -65,10 +65,9 @@ fn handle_options_from_user_input() {
         1 => add_new_bookmark(),
         2 => view_bookmarks(),
         3 => delete_bookmark(),
-        4 => purge_bookmarks(),
-        5 => quit(),
+        4 => quit(),
 	// We don't actually need this 6th here - just a convenience
-        6 => {
+        5 => {
 	    match generate_lum() {
 		Ok(_) => (),
 		Err(e) => println!("Error due to: {}", e),
@@ -87,9 +86,8 @@ fn print_options() {
     println!("1 - Add new bookmark;");
     println!("2 - View bookmarks;");
     println!("3 - Delete a bookmark;");
-    println!("4 - Purge bookmarks;");
-    println!("5 - Quit;");
-    println!("6 - Generate Lum;");
+    println!("4 - Quit;");
+    println!("5 - Generate Lum;");
 }
 
 fn add_new_bookmark() {
@@ -250,10 +248,6 @@ fn delete_bookmark() {
     }
 
     println!("Bookmark deleted successfully.");
-}
-
-fn purge_bookmarks() {
-    println!("Purging bookmarks now...");
 }
 
 fn quit() {
