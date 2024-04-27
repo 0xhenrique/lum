@@ -1,1 +1,26 @@
-title: "linux ubiquitous marker!"
+{
+    "owner": "admin",
+    "created_at": 1714182655,
+    "bookmarks": [
+	{
+	    "title": "Hyouka - Saint Pepsi",
+	    "link": "https://www.youtube.com/watch?v=SpQCuPTWrrI"
+	},
+	{
+	    "title": "【original anime MV】SHINKIRO【hololive/宝鐘マリン・Gawr Gura】",
+	    "link": "https://www.youtube.com/watch?v=9ehwhQJ50gs"
+	},
+	{
+	    "title": "【MV】Lucky☆Orb feat. Hatsune Miku by emon(Tes.) / ラッキー☆オーブ feat. 初音ミク by emon(Tes.) 【MIKU EXPO 5th】",
+	    "link": "https://www.youtube.com/watch?v=AufydOsiD6M"
+	},
+	{
+	    "title": "[Ochame Kinou] hololive Fukkireta Chorus [24 VTubers]",
+	    "link": "https://www.youtube.com/watch?v=9kQ2GtvDV3s"
+	},
+	{
+	    "title": "【MV】White Love／SPEED (Cover)【FUWAMOCO】",
+	    "link": "https://www.youtube.com/watch?v=D8YflSQi1Vk"
+	}
+    ]
+}

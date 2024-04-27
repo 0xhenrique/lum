@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use std::io;
 use std::io::prelude::*;
 use std::fs::File;
@@ -6,21 +6,21 @@ use std::num::ParseIntError;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::env;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 struct Bookmark {
     title: String,
     link: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 struct BookmarkData {
     owner: String,
     created_at: u64,
     bookmarks: Vec<Bookmark>,
 }
 
-fn create_json_file() -> std::io::Result<()> {
-    let computer_name = env::var("COMPUTERNAME").unwrap_or_else(|_| "admin".to_string());
+fn generate_lum() -> std::io::Result<()> {
+    let computer_name = env::var("OWNER").unwrap_or_else(|_| "admin".to_string());
 
     let created_at = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -39,7 +39,7 @@ fn create_json_file() -> std::io::Result<()> {
     };
 
     let json_data = serde_json::to_string_pretty(&bookmark_data)?;
-    let mut file = File::create("bookmark.json")?;
+    let mut file = File::create("assets/lum-marker.json")?;
     file.write_all(json_data.as_bytes())?;
 
     Ok(())
@@ -67,12 +67,21 @@ fn handle_options_from_user_input() {
         3 => delete_bookmark(),
         4 => purge_bookmarks(),
         5 => quit(),
+	// We don't actually need this 6th here - just a convenience
+        6 => {
+	    match generate_lum() {
+		Ok(_) => (),
+		Err(e) => println!("Error due to: {}", e),
+	    }
+	},
         _ => handle_options_from_user_input(),
     }
 }
 
-// The whole "input" logic will soon be moved to a specific directory/file so I can have a better
-// controll on this section -> src/input.rs maybe
+/*
+ * @TODO: The whole "input" logic will soon be moved to a specific directory/file so I can have a better
+ * controll on this section -> src/
+ */
 fn print_options() {
     println!("What is the operation?");
     println!("1 - Add new bookmark;");
@@ -80,6 +89,7 @@ fn print_options() {
     println!("3 - Delete a bookmark;");
     println!("4 - Purge bookmarks;");
     println!("5 - Quit;");
+    println!("6 - Generate Lum;");
 }
 
 fn add_new_bookmark() {
@@ -87,7 +97,35 @@ fn add_new_bookmark() {
 }
 
 fn view_bookmarks() {
-    println!("Viewing bookmarks now...");
+    let mut file = match File::open("assets/lum-marker.json") {
+        Ok(file) => file,
+        Err(error) => {
+            println!("Failed to open bookmark file due to: {}", error);
+            return;
+        }
+    };
+
+    let mut contents = String::new();
+    match file.read_to_string(&mut contents) {
+        Ok(_) => {
+            let bookmark_data: BookmarkData = match serde_json::from_str(&contents) {
+                Ok(data) => data,
+                Err(error) => {
+                    println!("Failed to parse bookmark data due to: {}", error);
+                    return;
+                }
+            };
+
+            println!("Bookmarks for {}: ", bookmark_data.owner);
+            for (index, bookmark) in bookmark_data.bookmarks.iter().enumerate() {
+                println!("{}. {}\n - {}\n", index + 1, bookmark.title, bookmark.link);
+            }
+        }
+        Err(error) => {
+            println!("Failed to read bookmark file due to: {}", error);
+            return;
+        }
+    }
 }
 
 fn delete_bookmark() {
