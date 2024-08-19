@@ -1,0 +1,19 @@
+* LUM - Linux Ubiquitous Marker
+This project was created for two main reasons: I wanted to mess a little bit with Rust and I wanted to have bookmarks outside the Web Browser.
+I plan to integrate Lum to other programs such as rofi/wofi, Emacs etc.
+
+** Installation
+I'm not shipping any binaries right now, so you will need to clone this repo and build locally:
+=git clone --depth=1 git@github.com:henrique-marques-vsoft/lum.git=
+=cd lum=
+=cargo build=
+=cargo run -h=
+
+** Options
+=lum -g= to generate the structured file;  
+=lum -h= ask for help;
+=lum -l= list all bookmarks;
+=lum -a= add a new bookmark entry;
+=lum -d= delete a bookmark;
+
+Bookmarks everywhere!

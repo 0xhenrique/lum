@@ -1,15 +1,15 @@
 use serde::{Serialize, Deserialize};
-use std::io;
+// use std::io;
 use std::io::prelude::*;
 use std::fs::{File, OpenOptions};
-use std::num::ParseIntError;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::env;
 
 #[derive(Serialize, Deserialize)]
 struct Bookmark {
-    title: String,
     link: String,
+    created_at: u64,
+    last_updated: u64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -28,8 +28,9 @@ fn generate_lum() -> std::io::Result<()> {
         .as_secs();
 
     let bookmark = Bookmark {
-        title: "Hyouka - Saint Pepsi".to_string(),
-        link: "https://www.youtube.com/watch?v=SpQCuPTWrrI".to_string(),
+        link: "https://github.com/henrique-marques-vsoft/lum".to_string(),
+	created_at,
+	last_updated: created_at,
     };
 
     let bookmark_data = BookmarkData {
@@ -45,52 +46,51 @@ fn generate_lum() -> std::io::Result<()> {
     Ok(())
 }
 
-fn handle_options_from_user_input() {
-    let mut parsed_input: Result<u32, ParseIntError>;
-    print_options();
+fn parse_cli_args() {
+    let args: Vec<String> = env::args().collect();
 
-    while {
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).expect("Invalid input. Failed to read line.");
-
-        parsed_input = input.trim().parse();
-        let parsed_input_clone = parsed_input.clone();
-        parsed_input.is_err() || !(1..=10).contains(&parsed_input_clone.unwrap())
-    } {
-        println!("Invalid input. Please enter a valid option!");
-        print_options();
-    }
-
-    match parsed_input.unwrap() {
-        1 => add_new_bookmark(),
-        2 => view_bookmarks(),
-        3 => delete_bookmark(),
-        4 => quit(),
-	// We don't actually need this 6th here - just a convenience
-        5 => {
-	    match generate_lum() {
-		Ok(_) => (),
-		Err(e) => println!("Error due to: {}", e),
-	    }
-	},
-        _ => handle_options_from_user_input(),
+    if args.len() > 1 {
+        match args[1].as_str() {
+            "-l" | "--list" => {
+		view_bookmarks();
+            }
+            "-h" | "--help" => {
+		help();
+            }
+            "-g" | "--generate" => {
+		let _ = generate_lum();
+            }
+            "-a" | "--add" => {
+		add_new_bookmark(args[2].to_string());
+            }
+            "-d" | "--delete" => {
+		delete_bookmark(args[2].to_string());
+            }
+            _ => {
+                println!("Invalid option. Use -h to see available options.");
+            }
+        }
+    } else {
+        println!("Use -h to see available options.");
     }
 }
 
-/*
- * @TODO: The whole "input" logic will soon be moved to a specific directory/file so I can have a better
- * controll on this section
- */
-fn print_options() {
-    println!("What is the operation?");
-    println!("1 - Add new bookmark;");
-    println!("2 - View bookmarks;");
-    println!("3 - Delete a bookmark;");
-    println!("4 - Quit;");
-    println!("5 - Generate Lum;");
+fn help() {
+    println!("
+Lum - Linux Ubiquitous Marker\n
+This project was created for two main reasons: I wanted to mess a little bit with Rust and I wanted to have bookmarks outside the Web Browser.
+I plan to integrate Lum to other programs such as rofi/wofi, Emacs etc.\n
+Usage: lum [OPTION] value \n
+OPTIONS:
+  -l, --list      -    Lists all available bookmarks
+  -h, --help      -    Shows this help output
+  -g, --generate  -    Generate the Bookmark file
+  -a, --add       -    Add a new bookmark to an already existent bookmark file
+  -d, --delete    -    Delete a bookmark by its index
+    ")
 }
 
-fn add_new_bookmark() {
+fn add_new_bookmark(link: String) {
     let mut file = match File::open("assets/lum-marker.json") {
 	Ok(file) => file,
 	Err(error) => {
@@ -98,6 +98,13 @@ fn add_new_bookmark() {
 		return;
 	}
     };
+
+    let created_at = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_secs();
+
+    let last_updated = created_at;
 
     let mut contents = String::new();
     if let Err(error) = file.read_to_string(&mut contents) {
@@ -113,17 +120,7 @@ fn add_new_bookmark() {
         }
     };
     
-    println!("Enter the title for the new bookmark:");
-    let mut title = String::new();
-    io::stdin().read_line(&mut title).expect("Failed to read input.");
-    let title = title.trim().to_string();
-    
-    println!("Enter the link for the new bookmark:");
-    let mut link = String::new();
-    io::stdin().read_line(&mut link).expect("Failed to read input.");
-    let link = link.trim().to_string();
-    
-    let new_bookmark = Bookmark { title, link };
+    let new_bookmark = Bookmark { link, created_at, last_updated};
     
     bookmark_data.bookmarks.push(new_bookmark);
     
@@ -171,9 +168,8 @@ fn view_bookmarks() {
                 }
             };
 
-            println!("Bookmarks for {}: ", bookmark_data.owner);
             for (index, bookmark) in bookmark_data.bookmarks.iter().enumerate() {
-                println!("{}. {}\n - {}\n", index, bookmark.title, bookmark.link);
+                println!("{}. - {}\n", index, bookmark.link);
             }
         }
         Err(error) => {
@@ -183,19 +179,8 @@ fn view_bookmarks() {
     }
 }
 
-fn delete_bookmark() {
-    view_bookmarks();
-
-    println!("Enter the index of the bookmark you want to delete:");
-    let mut index_input = String::new();
-    io::stdin().read_line(&mut index_input).expect("Failed to read input.");
-    let index_input: usize = match index_input.trim().parse() {
-        Ok(index) => index,
-        Err(error) => {
-            println!("Invalid input. Please enter a valid index due to: {}", error);
-            return;
-        }
-    };
+fn delete_bookmark(index: String) {
+    let selected_index: usize = index.parse().expect("You need the specify the index of the bookmark.");
 
     let mut file = match File::open("assets/lum-marker.json") {
         Ok(file) => file,
@@ -219,12 +204,12 @@ fn delete_bookmark() {
         }
     };
 
-    if index_input >= bookmark_data.bookmarks.len() {
+    if selected_index >= bookmark_data.bookmarks.len() {
         println!("Index out of bounds. This bookmark probably DO NOT exist.");
         return;
     }
 
-    bookmark_data.bookmarks.remove(index_input);
+    bookmark_data.bookmarks.remove(selected_index);
 
     let new_contents = match serde_json::to_string(&bookmark_data) {
         Ok(data) => data,
@@ -250,10 +235,6 @@ fn delete_bookmark() {
     println!("Bookmark deleted successfully.");
 }
 
-fn quit() {
-    println!("Goodbye... For now...");
-}
-
 fn main() {
-    handle_options_from_user_input();
+    parse_cli_args();
 }
