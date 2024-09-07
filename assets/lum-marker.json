@@ -1,11 +1,1 @@
-{
-  "owner": "admin",
-  "created_at": 1724105216,
-  "bookmarks": [
-    {
-      "link": "https://github.com/henrique-marques-vsoft/lum",
-      "created_at": 1724105216,
-      "last_updated": 1724105216
-    }
-  ]
-}
+{"owner":"admin","created_at":1725289033,"bookmarks":[{"link":"https://github.com/henrique-marques-vsoft/lum","created_at":1725289033,"last_updated":1725289033},{"link":"https://djtguide.neocities.org/","created_at":1725289082,"last_updated":1725289082}]}
