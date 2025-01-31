@@ -10,6 +10,8 @@
 (defrecord Bookmark [link description created-at last-updated])
 (defrecord BookmarkData [owner created-at bookmarks])
 
+(def version "1.0.0")
+
 (defn current-timestamp []
   (quot (.getTime (Date.)) 1000))
 
@@ -21,22 +23,26 @@
 
 (defn generate-lum []
   (let [home (home-dir)
-        computer-name (owner)
-        created-at (current-timestamp)
-        bookmark (->Bookmark "https://github.com/0xhenrique/lum" "a short description here..." created-at created-at)
-        bookmark-data (->BookmarkData computer-name created-at [bookmark])
-        json-data (json/generate-string bookmark-data {:pretty true})
-        bookmarks-path (str home "/bookmarks/lum-marker.json")]
+        bookmarks-path (str home "/.lum.json")]
+    (if (.exists (io/file bookmarks-path))
+      (println "The bookmark file already exists at:" bookmarks-path)
+      (let [computer-name (owner)
+            created-at (current-timestamp)
+            bookmark (->Bookmark "https://github.com/0xhenrique/lum" "a short description here..." created-at created-at)
+            bookmark-data (->BookmarkData computer-name created-at [bookmark])
+            json-data (json/generate-string bookmark-data {:pretty true})]
+        (try
+          (io/make-parents bookmarks-path)
+          (spit bookmarks-path json-data)
+          (println "Bookmark file generated at:" bookmarks-path)
+          (catch Exception e
+            (println "Error creating bookmark file:" (.getMessage e))))))))
 
-    (try
-      (io/make-parents bookmarks-path)
-      (spit bookmarks-path json-data)
-      (println "Bookmark file generated at:" bookmarks-path)
-      (catch Exception e
-        (println "Error creating bookmark file:" (.getMessage e))))))
+(defn print-lum-version []
+  (println "Lum version:" version))
 
 (defn view-bookmarks []
-  (let [file-path (str (home-dir) "/bookmarks/lum-marker.json")]
+  (let [file-path (str (home-dir) ".lum.json")]
     (try
       (let [bookmark-data (-> (slurp file-path) (json/parse-string true))]
         (doseq [bookmark (:bookmarks bookmark-data)]
@@ -45,7 +51,7 @@
         (println "Failed to view bookmarks:" (.getMessage e))))))
 
 (defn detail-bookmarks []
-  (let [file-path (str (home-dir) "/bookmarks/lum-marker.json")]
+  (let [file-path (str (home-dir) ".lum.json")]
     (try
       (let [bookmark-data (-> (slurp file-path) (json/parse-string true))]
         (doseq [[i bookmark] (map-indexed vector (:bookmarks bookmark-data))]
@@ -63,13 +69,14 @@ Usage: lum [OPTION] value
 
 OPTIONS:
   -l, --list      -    Lists all available bookmarks
+  -v, --version   -    Prints the current version of Lum
   -h, --help      -    Shows this help output
   -g, --generate  -    Generate the Bookmark file
   -a, --add       -    Add a new bookmark to an already existent bookmark file
   -d, --delete    -    Delete a bookmark by its index"))
 
 (defn add-new-bookmark [link]
-  (let [file-path (str (home-dir) "/bookmarks/lum-marker.json") 
+  (let [file-path (str (home-dir) ".lum.json") 
         created-at (current-timestamp)
         last-updated created-at]
 
@@ -87,7 +94,7 @@ OPTIONS:
 
 (defn delete-bookmark [index-str]
   (let [index (Integer/parseInt index-str)
-        file-path (str (home-dir) "/bookmarks/lum-marker.json")]
+        file-path (str (home-dir) ".lum.json")]
 
     (try
       (let [bookmark-data (-> (slurp file-path) (json/parse-string true))]
@@ -110,6 +117,9 @@ OPTIONS:
 
     (or (= "-l" (first args)) (= "--list" (first args)))
     (view-bookmarks)
+
+    (or (= "-v" (first args)) (= "--version" (first args)))
+    (print-lum-version)
 
     (or (= "-g" (first args)) (= "--generate" (first args)))
     (generate-lum)
