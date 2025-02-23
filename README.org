@@ -1,16 +1,23 @@
-# lum
+* lum
 
 Lum Universal Marker.
 
-## Usage
+** Usage
 
 Although it is not really necessary to run this program, having `fzf` and `xclip` would be great if you want to integrate with other programs.
 A pretty useful command to fetch your bookmarks would be:
-```
-user@user ~$ lum -l | fzf | xclip -selection clipboard
-```
+#+BEGIN_SRC bash
+~$ lum -l | fzf | xclip -selection clipboard
+#+END_SRC
 
-## License
+*** For Guix Users
+You can use the =manifest.scm= file to get a shell with all the dependencies you will need to run this project:
+#+BEGIN_SRC bash
+~$ guix shell --manifest=manifest.scm
+~$ lein run -- -g
+#+END_SRC
+
+** License
 
 Copyright © 2024 Henrique Marques
 

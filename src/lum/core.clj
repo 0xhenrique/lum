@@ -5,7 +5,8 @@
             [clojure.string :as str])
   (:import (java.util Date)
            (java.nio.file Files Paths)
-           (java.nio.file.attribute FileAttribute)))
+           (java.nio.file.attribute FileAttribute))
+	   (:gen-class))
 
 (defrecord Bookmark [link description created-at last-updated])
 (defrecord BookmarkData [owner created-at bookmarks])
@@ -42,7 +43,7 @@
   (println "Lum version:" version))
 
 (defn view-bookmarks []
-  (let [file-path (str (home-dir) ".lum.json")]
+  (let [file-path (str (home-dir) "/.lum.json")]
     (try
       (let [bookmark-data (-> (slurp file-path) (json/parse-string true))]
         (doseq [bookmark (:bookmarks bookmark-data)]
@@ -50,20 +51,9 @@
       (catch Exception e
         (println "Failed to view bookmarks:" (.getMessage e))))))
 
-(defn detail-bookmarks []
-  (let [file-path (str (home-dir) ".lum.json")]
-    (try
-      (let [bookmark-data (-> (slurp file-path) (json/parse-string true))]
-        (doseq [[i bookmark] (map-indexed vector (:bookmarks bookmark-data))]
-          (println (str (inc i) ". - " (:link bookmark)))))
-      (catch Exception e
-        (println "Failed to view bookmarks:" (.getMessage e))))))
-
 (defn print-help []
   (println "
 Lum - Lum Universal Marker
-
-Just for fun.
 
 Usage: lum [OPTION] value
 
@@ -76,7 +66,7 @@ OPTIONS:
   -d, --delete    -    Delete a bookmark by its index"))
 
 (defn add-new-bookmark [link]
-  (let [file-path (str (home-dir) ".lum.json") 
+  (let [file-path (str (home-dir) "/.lum.json") 
         created-at (current-timestamp)
         last-updated created-at]
 
@@ -94,7 +84,7 @@ OPTIONS:
 
 (defn delete-bookmark [index-str]
   (let [index (Integer/parseInt index-str)
-        file-path (str (home-dir) ".lum.json")]
+        file-path (str (home-dir) "/.lum.json")]
 
     (try
       (let [bookmark-data (-> (slurp file-path) (json/parse-string true))]
