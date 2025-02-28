@@ -17,6 +17,23 @@ You can use the =manifest.scm= file to get a shell with all the dependencies you
 ~$ lein run -- -g
 #+END_SRC
 
+*** For Emacs Users
+In Emacs, you can define a quick command to search and copy your bookmarks:
+#+BEGIN_SRC emacs-lisp
+  (defun my-consult-bookmark ()
+    "Select a bookmark using `completing-read` and copy it to the clipboard."
+    (interactive)
+    (let* ((candidates (split-string (shell-command-to-string "java -jar ~/path/to/lum/target/uberjar/lum-1.0.0-SNAPSHOT-standalone.jar -l") "\n" t))
+	   (selection (completing-read "Select bookmark: " candidates)))
+      (when selection
+	(kill-new selection)
+	(message "Copied to clipboard: %s" selection))))
+
+(global-set-key (kbd "C-c b") 'my-consult-bookmark)
+#+END_SRC
+
+Note that you must fix the =~/path/to/lum=.
+
 ** License
 
 Copyright © 2024 Henrique Marques
