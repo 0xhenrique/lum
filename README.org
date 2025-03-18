@@ -2,6 +2,9 @@
 
 Lum Universal Marker.
 
+This project was actually a bad idea to begin with. It is not meant to be used on a daily basis, the only reason I did this was to know learn a bit more about Clojure in general.
+I'm planning to make a new one in Emacs Lisp or maybe in Go, who knows. Although it works kinda okay on my machine, I can notice that the startup time can take up to ~1 second.
+
 ** Usage
 
 Although it is not really necessary to run this program, having `fzf` and `xclip` would be great if you want to integrate with other programs.
